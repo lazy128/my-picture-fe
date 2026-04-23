@@ -50,21 +50,13 @@ export const imageService = {
     return response.data.data?.items || response.data.data
   },
 
-  // FIX LỖI 404 & 400: Hợp nhất logic gửi file vào hàm create
-  // Khi gọi hàm này ở Component, bạn truyền vào object: { file: file, ten_hinh: '...', mo_ta: '...' }
-  create: async (payload) => {
-    const formData = new FormData();
-    // Chú ý: Key 'file_anh' phải khớp với uploadMemoryStorage.single("file_anh") ở Backend
-    formData.append('file_anh', payload.file); 
-    formData.append('ten_hinh', payload.ten_hinh);
-    formData.append('mo_ta', payload.mo_ta);
-
+  create: async (formData) => {
     const response = await api.post('/hinh-anh', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-    });
-    return response.data.data;
+    })
+    return response.data.data
   },
 
   delete: async (id) => {
