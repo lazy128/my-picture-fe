@@ -2,9 +2,22 @@ import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { Search, Bell, MessageCircle, Share2, Upload, Compass, PlusCircle, User as UserIcon, LogOut, Camera, Pencil, Trash2, X } from 'lucide-react'
-import { userService } from '../services'
+import { userService, imageService } from '../services'
 import { useAuth } from '../hooks/useAuth.jsx'
 import toast from 'react-hot-toast'
+import api from '../services/api.js'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3069/api'
+
+const getImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  const base = API_URL.replace(/\/+$/, '');
+  const imgPath = path.replace(/^\/+/, '');
+  return `${base}/${imgPath}`;
+};
 
 export default function DashboardPage() {
   const { user, logout, updateUser } = useAuth()
@@ -46,17 +59,15 @@ export default function DashboardPage() {
     const loadStats = async () => {
       if (!user?.nguoi_dung_id) return;
       try {
-        const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-        const res = await fetch(`http://localhost:3069/api/nguoi-dung/${user.nguoi_dung_id}/profile`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.data?._count) {
-          setUserStats({
-            followers: data.data._count.followers || 0,
-            following: data.data._count.following || 0
-          });
-        }
+        // Không có endpoint profile trong service hiện tại, tạm bỏ qua
+        // Có thể thêm sau nếu cần
+        // const res = await api.get(`/nguoi-dung/${user.nguoi_dung_id}/profile`)
+        // if (res.data.data?._count) {
+        //   setUserStats({
+        //     followers: res.data.data._count.followers || 0,
+        //     following: res.data.data._count.following || 0
+        //   })
+        // }
       } catch (e) {
         console.error("Lỗi lấy stats:", e);
       }
@@ -78,22 +89,16 @@ export default function DashboardPage() {
     if (!editingImage) return
     setSavingImage(true)
     try {
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
-      const res = await fetch(`http://localhost:3069/api/hinh-anh/${editingImage.hinh_id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(editImageForm)
-      })
-      
-      if (!res.ok) throw new Error('Cập nhật thất bại')
+      // Sử dụng api trực tiếp vì chưa có update trong imageService
+      const token = localStorage.getItem('accessToken')
+      const res = await api.put(`/hinh-anh/${editingImage.hinh_id}`, editImageForm)
+
       toast.success("Cập nhật thông tin ảnh thành công!")
-      setEditingImage(null) // Đóng modal
-      fetchImages() // Tải lại danh sách ảnh
+      setEditingImage(null)
+      fetchImages()
     } catch (err) {
-      toast.error(err.message)
+      const msg = err.response?.data?.message || err.message || 'Cập nhật thất bại'
+      toast.error(msg)
     } finally {
       setSavingImage(false)
     }
@@ -103,16 +108,12 @@ export default function DashboardPage() {
     e.stopPropagation()
     if (!window.confirm('Xóa ảnh này không?')) return
     try {
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
-      const res = await fetch(`http://localhost:3069/api/hinh-anh/${imgId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Xóa thất bại')
+      await imageService.delete(imgId)
       setMyImages(prev => prev.filter(img => img.hinh_id !== imgId))
       toast.success('Đã xóa ảnh!')
     } catch (err) {
-      toast.error(err.message)
+      const msg = err.response?.data?.message || err.message || 'Xóa thất bại'
+      toast.error(msg)
     }
   }
 
@@ -124,21 +125,16 @@ export default function DashboardPage() {
   const handleSaveProfile = async () => {
     setSavingProfile(true)
     try {
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
-      const res = await fetch('http://localhost:3069/api/nguoi-dung/me', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ho_ten: editForm.ho_ten, tuoi: Number(editForm.tuoi) }),
+      await userService.updateProfile({
+        ho_ten: editForm.ho_ten,
+        tuoi: Number(editForm.tuoi)
       })
-      if (!res.ok) throw new Error('Cập nhật thất bại')
       updateUser({ ho_ten: editForm.ho_ten, tuoi: Number(editForm.tuoi) })
       toast.success('Đã cập nhật thông tin!')
       setShowEditModal(false)
     } catch (err) {
-      toast.error(err.message)
+      const msg = err.response?.data?.message || err.message || 'Cập nhật thất bại'
+      toast.error(msg)
     } finally {
       setSavingProfile(false)
     }
@@ -153,15 +149,16 @@ export default function DashboardPage() {
     formData.append("anh_dai_dien", file)
     try {
       toast.loading("Đang cập nhật Avatar...", { id: "avatar" })
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
-      const response = await fetch('http://localhost:3069/api/nguoi-dung/avatar', {
+      const token = localStorage.getItem('accessToken')
+      const BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3069/api').replace(/\/+$/, '')
+      const response = await fetch(`${BASE}/nguoi-dung/avatar`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       })
       if (!response.ok) throw new Error("Cập nhật thất bại")
       const data = await response.json()
-      updateUser({ anh_dai_dien: data.data?.anh_dai_dien })
+      updateUser({ anh_dai_dien: data.data?.anh_dai_dien || data.anh_dai_dien })
       toast.success("Đổi Avatar thành công!", { id: "avatar" })
     } catch (error) {
       toast.error(error.message, { id: "avatar" })
@@ -211,7 +208,7 @@ export default function DashboardPage() {
                    style={{ borderColor: '#ff86c3', boxShadow: '0 0 30px rgba(255, 134, 195, 0.4)' }}>
                 {user?.anh_dai_dien ? (
                   <img
-                    src={user.anh_dai_dien.startsWith('http') ? user.anh_dai_dien : `http://localhost:3069/${user.anh_dai_dien}`}
+                    src={getImageUrl(user.anh_dai_dien)}
                     alt="Avatar" className="w-full h-full object-cover group-hover:opacity-60 transition-opacity" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-4xl font-bold group-hover:opacity-60 transition-opacity"
@@ -303,7 +300,7 @@ export default function DashboardPage() {
                     style={{ breakInside: 'avoid', backgroundColor: '#0c1934' }}
                   >
                     <img
-                      src={item.duong_dan?.startsWith('http') ? item.duong_dan : `http://localhost:3069/${item.duong_dan}`}
+                      src={getImageUrl(item.duong_dan)}
                       alt={item.ten_hinh}
                       className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       loading="lazy"
