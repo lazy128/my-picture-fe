@@ -50,13 +50,23 @@ export const imageService = {
     return response.data.data?.items || response.data.data
   },
 
-  create: async (formData) => {
-    const response = await api.post('/hinh-anh', formData, {
+create: async (formData) => {
+    const token = localStorage.getItem('accessToken');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3069/api';
+
+    const response = await fetch(`${API_URL}/hinh-anh`, {
+      method: 'POST',
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-    return response.data.data
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+       throw new Error(data.message || 'Lỗi từ server!');
+    }
+    return data.data;
   },
 
   delete: async (id) => {
