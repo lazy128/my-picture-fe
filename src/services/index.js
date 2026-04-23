@@ -54,8 +54,8 @@ create: async (formData) => {
     const token = localStorage.getItem('accessToken');
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3069/api';
 
-    // FIX CHỐT HẠ: Thêm /upload vào URL để Backend nhận được file!
-    const response = await fetch(`${API_URL}/hinh-anh/upload`, {
+    // TRẢ LẠI ĐÚNG ĐƯỜNG DẪN NÀY (BỎ CHỮ /upload ĐI)
+    const response = await fetch(`${API_URL}/hinh-anh`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
