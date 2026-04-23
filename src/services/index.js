@@ -51,11 +51,7 @@ export const imageService = {
   },
 
   create: async (formData) => {
-    const response = await api.post('/hinh-anh', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
+    const response = await api.post('/hinh-anh', formData)
     return response.data.data
   },
 
