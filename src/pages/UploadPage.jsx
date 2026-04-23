@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, CloudUpload, Image as ImageIcon } from 'lucide-react'
+import { imageService } from '../services'
 import toast from 'react-hot-toast'
 
 const CATEGORIES = ['Thiết kế', 'Phong cảnh', 'Anime', 'Động vật', 'Xe cộ', 'Nghệ thuật', 'Cyberpunk', 'Meme']
@@ -32,27 +33,21 @@ export default function UploadPage() {
     const formData = new FormData()
     formData.append("file_anh", selectedFile)
     formData.append("ten_hinh", uploadData.ten_hinh)
-    
+
     // Nối Category vào trước mô tả để thanh Search ở HomePage tìm được
     const moTaHoanChinh = `[${uploadData.category}] ${uploadData.mo_ta}`
     formData.append("mo_ta", moTaHoanChinh)
 
     try {
       toast.loading("Đang đẩy ảnh lên mây...", { id: "uploading" })
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
 
-      const response = await fetch('http://localhost:3069/api/hinh-anh/upload', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData,
-      })
-
-      if (!response.ok) throw new Error("Upload thất bại")
+      await imageService.create(formData)
 
       toast.success("Đăng Aura thành công rực rỡ!", { id: "uploading" })
-      navigate('/') // Đăng xong cho văng ra trang chủ ngắm luôn
+      navigate('/')
     } catch (error) {
-      toast.error("Lỗi: " + error.message, { id: "uploading" })
+      const msg = error.response?.data?.message || error.message || "Upload thất bại"
+      toast.error("Lỗi: " + msg, { id: "uploading" })
     } finally {
       setLoading(false)
     }

@@ -5,6 +5,21 @@ import { Search, Camera, LogIn, LogOut } from 'lucide-react'
 import { imageService } from '../services'
 import { useAuth } from '../hooks/useAuth.jsx'
 import toast from 'react-hot-toast'
+import api from '../services/api.js'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3069/api'
+
+const getImageUrl = (path) => {
+  if (!path) return '';
+  // If it's already a full URL, return as-is
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  // Ensure single slash between API_URL and path
+  const base = API_URL.replace(/\/+$/, '');
+  const imgPath = path.replace(/^\/+/, '');
+  return `${base}/${imgPath}`;
+};
 
 const aura = {
   surface: '#060e20', surfaceHigh: '#101e3e', surfaceVariant: '#142449',
@@ -147,7 +162,7 @@ const handleSearch = async (e) => {
                 }}
               >
                 {user?.anh_dai_dien
-                  ? <img src={user.anh_dai_dien} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ? <img src={getImageUrl(user.anh_dai_dien)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <span style={{ fontSize: '0.875rem', fontWeight: 700, color: aura.primary }}>
                       {user?.ho_ten?.[0]?.toUpperCase() || 'U'}
                     </span>
@@ -256,11 +271,11 @@ const handleSearch = async (e) => {
                 }}
               >
                 {img.duong_dan
-                  ? <img 
-                      src={img.duong_dan?.startsWith('http') ? img.duong_dan : `http://localhost:3069/${img.duong_dan}`} 
+                  ? <img
+                      src={getImageUrl(img.duong_dan)}
                       alt={img.ten_hinh}
                       style={{ width: '100%', display: 'block', borderRadius: '1rem' }}
-                      loading="lazy" 
+                      loading="lazy"
                     />
                   : <div style={{
                       height: '200px', display: 'flex', alignItems: 'center',

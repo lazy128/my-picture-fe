@@ -5,6 +5,19 @@ import { ArrowLeft, Camera } from 'lucide-react'
 import { profileService } from '../services'
 import { useAuth } from '../hooks/useAuth.jsx'
 import toast from 'react-hot-toast'
+import api from '../services/api.js'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3069/api'
+
+const getImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  const base = API_URL.replace(/\/+$/, '');
+  const imgPath = path.replace(/^\/+/, '');
+  return `${base}/${imgPath}`;
+};
 
 const aura = {
   surface: '#060e20', surfaceHigh: '#101e3e', surfaceVariant: '#142449',
@@ -98,8 +111,7 @@ export default function ProfilePage() {
             border:`3px solid ${aura.primary}`, boxShadow:`0 0 30px rgba(255,134,195,0.3)`, overflow:'hidden',
             background:aura.surfaceVariant, display:'flex', alignItems:'center', justifyContent:'center' }}>
             {profile?.anh_dai_dien
-              ? <img src={profile.anh_dai_dien.startsWith('http') ? profile.anh_dai_dien : `http://localhost:3069/${profile.anh_dai_dien}`}
-                  alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+              ? <img src={getImageUrl(profile.anh_dai_dien)} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
               : <span style={{ fontSize:'2.5rem', fontWeight:700, color:aura.primary }}>
                   {profile?.ho_ten?.[0]?.toUpperCase() || '?'}
                 </span>
@@ -168,7 +180,7 @@ export default function ProfilePage() {
                   overflow:'hidden', cursor:'pointer', background:aura.surfaceHigh }}
               >
                 {img.duong_dan
-                  ? <img src={img.duong_dan?.startsWith('http') ? img.duong_dan : `http://localhost:3069/${img.duong_dan}`}
+                  ? <img src={getImageUrl(img.duong_dan)}
                       alt={img.ten_hinh} style={{ width:'100%', display:'block', borderRadius:'1rem' }} loading="lazy" />
                   : <div style={{ height:'200px', display:'flex', alignItems:'center', justifyContent:'center', background:aura.surfaceVariant }}>
                       <Camera size={32} style={{ color:aura.outlineVariant }} />

@@ -7,6 +7,18 @@ import { imageService } from '../services'
 import toast from 'react-hot-toast'
 import api from '../services/api.js'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3069/api'
+
+const getImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  const base = API_URL.replace(/\/+$/, '');
+  const imgPath = path.replace(/^\/+/, '');
+  return `${base}/${imgPath}`;
+};
+
 const aura = {
   surface:          '#060e20',
   surfaceLow:       '#081329',
@@ -169,7 +181,7 @@ export default function ImageDetailPage() {
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}
           style={{ borderRadius: '1.25rem', overflow: 'hidden', position: 'sticky', top: '5rem' }}>
           {image?.duong_dan
-            ? <img src={image.duong_dan?.startsWith('http') ? image.duong_dan : `http://localhost:3069/${image.duong_dan}`}
+            ? <img src={getImageUrl(image.duong_dan)}
                 alt={image.ten_hinh} style={{ width: '100%', display: 'block', borderRadius: '1.25rem' }} />
             : <div style={{ height: '480px', background: aura.surfaceVariant, borderRadius: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ fontSize: '3rem' }}>🖼</span>
@@ -191,7 +203,7 @@ export default function ImageDetailPage() {
                 {showMenu && (
                   <div onClick={() => setShowMenu(false)} style={{ position: 'absolute', top: 'calc(100% + 0.5rem)', left: 0, zIndex: 100, background: aura.surfaceHigh, border: '1px solid rgba(56,71,109,0.3)', borderRadius: '0.75rem', overflow: 'hidden', minWidth: '160px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
                     {[
-                      { label: '⬇️  Tải ảnh về', action: () => { const a = document.createElement('a'); a.href = image?.duong_dan?.startsWith('http') ? image.duong_dan : `http://localhost:3069/${image?.duong_dan}`; a.download = image?.ten_hinh || 'image'; a.click() } },
+                      { label: '⬇️  Tải ảnh về', action: () => { const a = document.createElement('a'); a.href = getImageUrl(image?.duong_dan); a.download = image?.ten_hinh || 'image'; a.click() } },
                       { label: '🔗  Copy link', action: () => { navigator.clipboard.writeText(window.location.href); toast.success('Đã copy link!') } },
                       { label: '🚩  Báo cáo', action: () => toast('Đã gửi báo cáo') },
                     ].map(item => (
@@ -340,7 +352,7 @@ export default function ImageDetailPage() {
                 onClick={() => navigate(`/hinh-anh/${img.hinh_id}`)}
                 style={{ cursor: 'pointer', borderRadius: '1rem', overflow: 'hidden', position: 'relative' }}>
                 {img.duong_dan
-                  ? <img src={img.duong_dan?.startsWith('http') ? img.duong_dan : `http://localhost:3069/${img.duong_dan}`}
+                  ? <img src={getImageUrl(img.duong_dan)}
                       alt={img.ten_hinh} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', display: 'block' }} />
                   : <div style={{ aspectRatio: '1', background: aura.surfaceVariant, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <span style={{ fontSize: '2rem' }}>🖼</span>
