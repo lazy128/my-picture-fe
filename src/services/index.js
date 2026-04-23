@@ -61,7 +61,7 @@ export const imageService = {
   },
 
   save: async (id) => {
-    const response = await api.post(`/hinh-anh/${id}/luu`)
+    const response = await api.post(`/hinh-anh/${id}/luu-anh`)
     return response.data.data
   },
   upload: async (file, ten_hinh, mo_ta) => {
